@@ -1,0 +1,91 @@
+.header {
+    display: flex;
+    flex-direction: row;
+
+    // justify-content: center;
+    align-items: center;
+
+    gap: 3rem;
+
+
+    &__score {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 8rem ;
+        aspect-ratio: 1/1;
+        border-radius: 50%;
+        border: 5px solid green;
+
+        font-size: 1.6rem;
+    }
+
+
+    &__details {
+        & ul {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        &--domain {
+            font-size: 2rem;
+        }
+
+        &--status {
+            display: flex;
+            flex-direction: row;
+            gap: .5rem;
+    
+            font-size: 1.6rem;
+    
+            &-indicator {
+                text-transform: uppercase;
+            }
+        }
+
+        &--date {
+            font-size: 1.2rem;
+        }
+    }
+}
+
+
+
+.details__card {
+    &--header {
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #333;
+    }
+}
+
+.details__tabs {
+    &--overview {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+
+        & ul {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+
+    &--table {
+        &-container {
+            display: flex;
+            flex-direction: row;
+            gap: 4rem;
+        }
+    }
+}
+
+
+.antivirus {
+    &__name,
+    &__result {
+        text-transform: capitalize;
+    }
+}
