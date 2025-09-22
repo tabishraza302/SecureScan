@@ -74,10 +74,10 @@ class ScanningController {
             const result = await this.scanCRUDService.GetFullReport(domain);
             const { score, domain: scannedDomain, scan_date } = result[0]?.dataValues;
 
-            const response = result[0].dataValues.ApiResponse
-            const virusTotalReport = JSON.parse(response.find((res: any) => res.api_name === "virustotal").response);
-            const urlScanReport = JSON.parse(response.find((res: any) => res.api_name === "urlscanio").response);
+            const response = JSON.stringify(result[0].dataValues.ApiResponse);
 
+            const virusTotalReport = JSON.parse(response).find((res: any) => res.api_name === "virustotal").response;
+            const urlScanReport = JSON.parse(response).find((res: any) => res.api_name === "urlscanio").response;
 
             let summary = {
                 maliciousCount: 0,
