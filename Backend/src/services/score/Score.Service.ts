@@ -1,19 +1,19 @@
-import { URLScanReportType, VirustotalReportType } from "../../types/Types";
+import { URLScanReportType, VirustotalReportType } from '../../types/Types';
 
 // Engine weight priority map (higher means more trusted/impactful)
 const ANTIVIRUS_WEIGHTS: Record<string, number> = {
-    "Kaspersky": 5,
-    "BitDefender": 5,
-    "ESET-NOD32": 4,
-    "Microsoft": 4,
-    "Symantec": 4,
-    "Avast": 3,
-    "AVG": 3,
-    "Sophos": 3,
-    "ClamAV": 2,
-    "Malwarebytes": 3,
+    Kaspersky: 5,
+    BitDefender: 5,
+    'ESET-NOD32': 4,
+    Microsoft: 4,
+    Symantec: 4,
+    Avast: 3,
+    AVG: 3,
+    Sophos: 3,
+    ClamAV: 2,
+    Malwarebytes: 3,
     // Default for others
-    "_default": 1.5,
+    _default: 1.5,
 };
 
 const WEIGHTS = {
@@ -33,13 +33,16 @@ const WEIGHTS = {
         repeatedDomainPenalty: -1.5,
         ipCountPenalty: -3,
         secureBonus: +5,
-    }
+    },
 };
 
 class ScoreService {
-    public calculateScore(virustotalData: VirustotalReportType, urlscanData: URLScanReportType): number {
-        const vtScore = this.getVirustotalScore(virustotalData);
-        const usScore = this.getUrlscanScore(urlscanData);
+    public calculateScore(
+        virustotalData: VirustotalReportType | null,
+        urlscanData: URLScanReportType | null
+    ): number {
+        const vtScore = virustotalData ? this.getVirustotalScore(virustotalData) : 0;
+        const usScore = urlscanData ? this.getUrlscanScore(urlscanData) : 0;
         const rawScore = 100 + vtScore + usScore;
         return Math.max(0, Math.min(100, rawScore));
     }
@@ -59,9 +62,9 @@ class ScoreService {
         let detectedCount = 0;
 
         for (const [engineName, result] of Object.entries(engines)) {
-            if (!result?.result || ["clean", "unrated"].includes(result.result)) continue;
+            if (!result?.result || ['clean', 'unrated'].includes(result.result)) continue;
             detectedCount++;
-            const weight = ANTIVIRUS_WEIGHTS[engineName] ?? ANTIVIRUS_WEIGHTS["_default"];
+            const weight = ANTIVIRUS_WEIGHTS[engineName] ?? ANTIVIRUS_WEIGHTS['_default'];
             weightedScore -= weight;
         }
 
@@ -80,21 +83,21 @@ class ScoreService {
     private getUrlscanScore(scan: URLScanReportType): number {
         const { lists = {}, page = {}, stats = {}, verdicts = {} } = scan;
 
-        const country = (page["country"] as string || "").toUpperCase();
-        const visibility = (page["visibility"] as string || "").toLowerCase();
+        const country = ((page['country'] as string) || '').toUpperCase();
+        const visibility = ((page['visibility'] as string) || '').toLowerCase();
         const tags = (verdicts?.overall?.tags || []) as string[];
         const isMalicious = verdicts?.overall?.malicious === true;
         const linkDomains: string[] = lists.linkDomains || [];
 
-        const riskyCountries = ["RU", "CN", "KP", "IR"];
-        const riskyVisibilities = ["public", "unlisted"];
+        const riskyCountries = ['RU', 'CN', 'KP', 'IR'];
+        const riskyVisibilities = ['public', 'unlisted'];
 
         let score = 0;
 
         if (isMalicious) score += WEIGHTS.urlscan.maliciousVerdict;
         if (riskyCountries.includes(country)) score += WEIGHTS.urlscan.riskyCountry;
         if (riskyVisibilities.includes(visibility)) score += WEIGHTS.urlscan.riskyVisibility;
-        if (tags.includes("secure")) score += WEIGHTS.urlscan.secureBonus;
+        if (tags.includes('secure')) score += WEIGHTS.urlscan.secureBonus;
 
         // Domain volume penalty
         if (linkDomains.length > 30) {
@@ -105,11 +108,11 @@ class ScoreService {
 
         // Repeated domain penalty
         const domainCounts: Record<string, number> = {};
-        linkDomains.forEach(domain => {
+        linkDomains.forEach((domain) => {
             domainCounts[domain] = (domainCounts[domain] || 0) + 1;
         });
 
-        const repeatedDomains = Object.values(domainCounts).filter(count => count > 3).length;
+        const repeatedDomains = Object.values(domainCounts).filter((count) => count > 3).length;
         if (repeatedDomains > 0) {
             score += repeatedDomains * WEIGHTS.urlscan.repeatedDomainPenalty;
         }

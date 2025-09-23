@@ -74,10 +74,10 @@ class ScanningController {
             const result = await this.scanCRUDService.GetFullReport(domain);
             const { score, domain: scannedDomain, scan_date } = result[0]?.dataValues;
 
-            const response = JSON.stringify(result[0].dataValues.ApiResponse);
+            const response = result[0].dataValues.ApiResponse;
 
-            const virusTotalReport = JSON.parse(response).find((res: any) => res.api_name === "virustotal").response;
-            const urlScanReport = JSON.parse(response).find((res: any) => res.api_name === "urlscanio").response;
+            const virusTotalReport = response.find((res: any) => res.api_name === "virustotal")?.response || null;
+            const urlScanReport = response.find((res: any) => res.api_name === "urlscanio")?.response || null;
 
             let summary = {
                 maliciousCount: 0,
@@ -90,30 +90,35 @@ class ScanningController {
 
             let engineReports: { [key: string]: string } = {};
 
+            // Process VirusTotal data if available
+            if (virusTotalReport) {
+                const { stats: VirustotalStats, antivirusResults } = virusTotalReport;
 
-            // const response = result[0].dataValues.ApiResponse
-            const { stats: VirustotalStats, antivirusResults } = virusTotalReport;
+                // Virustotal Data buildup
+                const { malicious, suspicious, undetected, harmless, timeout } = VirustotalStats;
+                for (const antivirus in antivirusResults) {
+                    const name: string = antivirusResults[antivirus].engine_name
+                    const value: string = antivirusResults[antivirus].result
 
-            // Virustotal Data buildup
-            const { malicious, suspicious, undetected, harmless, timeout } = VirustotalStats;
-            for (const antivirus in antivirusResults) {
-                const name: string = antivirusResults[antivirus].engine_name
-                const value: string = antivirusResults[antivirus].result
+                    engineReports[name] = value;
+                }
 
-                engineReports[name] = value;
+                summary.timeoutCount += timeout;
+                summary.harmlessCount += harmless;
+                summary.undetectedCount += undetected;
+                summary.suspiciousCount += suspicious;
+                summary.maliciousCount += malicious;
             }
 
-            summary.timeoutCount += timeout;
-            summary.harmlessCount += harmless;
-            summary.undetectedCount += undetected;
-            summary.suspiciousCount += suspicious;
-
             // URLScan Data buildup
-            const { urls: externalLinks } = urlScanReport.lists;
-            const { malicious: URLScanMaliciousCount, totalLinks } = urlScanReport.stats;
+            let externalLinks = [];
+            if (urlScanReport) {
+                externalLinks = urlScanReport.lists?.urls || [];
+                const { malicious: URLScanMaliciousCount, totalLinks } = urlScanReport.stats;
 
-            summary.totalLinksCount += totalLinks;
-            summary.maliciousCount += (malicious + URLScanMaliciousCount);
+                summary.totalLinksCount += totalLinks || 0;
+                summary.maliciousCount += URLScanMaliciousCount || 0;
+            }
 
             return success(res, 200, "", { score, scannedDomain, scan_date, summary, engineReports, externalLinks })
         } catch (error) {
