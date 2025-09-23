@@ -5,9 +5,9 @@ import cors from 'cors';
 import express from 'express';
 
 import Logger from './utils/logger/Logger';
-import Database from "./database/Database";
+import Database from './database/Database';
 import ErrorHandler from './utils/ErrorHandler';
-import IndexRoutes from "./routes/Index.Routes";
+import IndexRoutes from './routes/Index.Routes';
 import ErrorMiddleware from './middlewares/Error.Middleware';
 import MorganMiddleware from './middlewares/Morgan.Middleware';
 
@@ -23,8 +23,18 @@ app.use(MorganMiddleware);
 
 app.use(IndexRoutes);
 
-app.use((req, res, next) => next(new ErrorHandler(404, `Cannot find ${req.originalUrl} on this server`))); // Handles 404 routes
+app.use((req, res, next) =>
+    next(new ErrorHandler(404, `Cannot find ${req.originalUrl} on this server`))
+); // Handles 404 routes
 app.use(ErrorMiddleware);
 
-Database.sync({ alter: false, force: false }).then(() => app.listen(port, () => console.log(`Server started on port ${port}`)));
-
+console.log('Starting database sync...');
+Database.sync({ alter: false, force: false })
+    .then(() => {
+        console.log('Database synced successfully');
+        app.listen(port, () => console.log(`Server started on port ${port}`));
+    })
+    .catch((error) => {
+        console.error('Database sync failed:', error);
+        process.exit(1);
+    });
