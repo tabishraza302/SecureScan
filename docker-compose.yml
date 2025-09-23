@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: securescan_postgres
+    environment:
+      POSTGRES_DB: securescan_db
+      POSTGRES_USER: securescan_user
+      POSTGRES_PASSWORD: securescan_password
+    ports:
+      - "7382:7382"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
